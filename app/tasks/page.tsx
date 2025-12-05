@@ -24,7 +24,7 @@ const TasksPage: React.FC = () => {
   const [filterStatus, setFilterStatus] = useState<"all" | "active" | "completed">("all");
   const [searchQuery, setSearchQuery] = useState("");
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
-  
+  const [loading, setLoading] = useState(false); //ading loading finctionality
   // Edit/Create Mode State
   const [isEditing, setIsEditing] = useState(false);
   const [isCreating, setIsCreating] = useState(false);
@@ -96,7 +96,11 @@ const TasksPage: React.FC = () => {
   const handleSave = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.title.trim()) return;
+    
+    //  Prevent duplicate clicks
+    if (loading) return;
 
+  setLoading(true);
     try {
       if (isCreating) {
         await API.post("/task", {
@@ -117,9 +121,11 @@ const TasksPage: React.FC = () => {
         });
         setIsEditing(false);
       }
-      fetchTasks();
+     await fetchTasks();
     } catch (err) {
       console.log("Error saving task:", err);
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -174,16 +180,30 @@ const TasksPage: React.FC = () => {
             <span className="font-bold text-xl text-slate-800">TaskFlow</span>
           </div>
           <div className="flex items-center gap-2">
-            <button onClick={handleCreateNew} className="p-2 bg-indigo-50 text-indigo-600 rounded-full hover:bg-indigo-100 transition-colors">
-              <Plus className="w-5 h-5" />
-            </button>
-            <button
-              className="md:hidden p-2"
-              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-            >
-              {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-            </button>
-          </div>
+  <button
+    onClick={handleCreateNew}
+    disabled={loading }
+    className={`p-2 rounded-full transition-colors 
+      ${loading  
+        ? "bg-indigo-100 text-indigo-300 cursor-not-allowed" 
+        : "bg-indigo-50 text-indigo-600 hover:bg-indigo-100"
+      }`}
+  >
+    {loading ? (
+      <span className="animate-spin w-5 h-5 border-2 border-indigo-600 border-t-transparent rounded-full"></span>
+    ) : (
+      <Plus className="w-5 h-5" />
+    )}
+  </button>
+
+  <button
+    className="md:hidden p-2"
+    onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+  >
+    {isMobileMenuOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
+  </button>
+</div>
+
         </div>
 
         {/* Mobile Menu Dropdown */}
