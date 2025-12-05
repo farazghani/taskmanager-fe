@@ -17,6 +17,16 @@ const RegisterPage = () => {
     e.preventDefault();
 
     try {
+      const detail = {
+        name: name.trim(),
+        email: email.trim().toLowerCase(),
+        password: password.trim()
+      };
+      if(!detail.name || !detail.email || !detail.password){
+        setError("All fields are required");
+        return;
+      }
+      
       const res = await API.post("/user/register", {
         name,
         email,

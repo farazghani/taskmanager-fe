@@ -15,7 +15,17 @@ const LoginPage = () => {
     e.preventDefault();
 
     try {
-      const res = await API.post("/user/login", { email, password });
+      const detail = {
+        email: email.trim().toLowerCase(),
+        password: password.trim()
+      }
+
+      if(!detail.email || !detail.password){
+        setError("all feilds are required");
+        return;
+      }
+
+      const res = await API.post("/user/login", detail);
 
       localStorage.setItem("token", res.data.token);
       router.push("/tasks");
