@@ -10,12 +10,12 @@ const LoginPage = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      const detail = {
+    const detail = {
         email: email.trim().toLowerCase(),
         password: password.trim()
       }
@@ -25,12 +25,23 @@ const LoginPage = () => {
         return;
       }
 
-      const res = await API.post("/user/login", detail);
+      const emailPattern = /\S+@\S+\.\S+/;
+      if (!emailPattern.test(detail.email)) {
+     setError("Please enter a valid email address.");
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+     const res = await API.post("/user/login", detail);
 
       localStorage.setItem("token", res.data.token);
       router.push("/tasks");
     } catch (err: any) {
       setError(err?.response?.data?.msg || "Login failed");
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -56,11 +67,16 @@ const LoginPage = () => {
 
 
           <button
-            type="submit"
-            className="w-full bg-indigo-700 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
-          >
-            Login
-          </button>
+        type="submit"
+        disabled={loading}
+        className={`w-full text-white py-2 rounded-lg transition
+        ${loading 
+        ? "bg-indigo-400 cursor-not-allowed" 
+        : "bg-indigo-700 hover:bg-indigo-600"
+       }`}
+        >
+          {loading ? "Logging in..." : "Login"}
+        </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-slate-600">

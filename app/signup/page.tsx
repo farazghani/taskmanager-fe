@@ -11,13 +11,12 @@ const RegisterPage = () => {
   const [email, setEmail] = useState<string>("");
   const [password, setPassword] = useState<string>("");
   const [error, setError] = useState<string>("");
-  
+  const [loading, setLoading] = useState<boolean>(false);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    try {
-      const detail = {
+     const detail = {
         name: name.trim(),
         email: email.trim().toLowerCase(),
         password: password.trim()
@@ -26,17 +25,23 @@ const RegisterPage = () => {
         setError("All fields are required");
         return;
       }
-      
-      const res = await API.post("/user/register", {
-        name,
-        email,
-        password,
-      });
+      const emailPattern = /\S+@\S+\.\S+/;
+      if (!emailPattern.test(detail.email)) {
+     setError("Please enter a valid email address.");
+      return;
+    }
+    
+     setLoading(true);
+
+    try {
+      const res = await API.post("/user/register",  detail);
 
       localStorage.setItem("token", res.data.token);
       router.push("/tasks");
     } catch (err: any) {
       setError(err?.response?.data?.msg || "Registration failed");
+    }finally{
+      setLoading(false);
     }
   };
 
@@ -67,11 +72,16 @@ const RegisterPage = () => {
 
 
           <button
-            type="submit"
-            className="w-full bg-indigo-600 text-white py-2 rounded-lg hover:bg-indigo-700 transition"
-          >
-            Register
-          </button>
+         type="submit"
+         disabled={loading}
+        className={`w-full text-white py-2 rounded-lg transition
+         ${loading 
+         ? "bg-indigo-400 cursor-not-allowed" 
+         : "bg-indigo-600 hover:bg-indigo-700"
+          }`}
+        >
+         {loading ? "Registering..." : "Register"}
+        </button>
         </form>
 
         <p className="mt-4 text-center text-sm text-slate-600">
