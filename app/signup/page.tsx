@@ -1,97 +1,146 @@
 "use client";
 
-import { useState } from "react";
+import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { useState } from "react";
+
 import API from "@/api/api";
+import { TaskflowShell } from "@/components/taskflow-shell";
 
 const RegisterPage = () => {
   const router = useRouter();
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
 
-  const [name, setName] = useState<string>("");
-  const [email, setEmail] = useState<string>("");
-  const [password, setPassword] = useState<string>("");
-  const [error, setError] = useState<string>("");
-  const [loading, setLoading] = useState<boolean>(false);
+  const getErrorMessage = (error: unknown, fallback: string) => {
+    if (
+      typeof error === "object" &&
+      error !== null &&
+      "response" in error
+    ) {
+      const response = (error as { response?: { data?: { msg?: string } } })
+        .response;
+      return response?.data?.msg || fallback;
+    }
+
+    return fallback;
+  };
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
 
-     const detail = {
-        name: name.trim(),
-        email: email.trim().toLowerCase(),
-        password: password.trim()
-      };
-      if(!detail.name || !detail.email || !detail.password){
-        setError("All fields are required");
-        return;
-      }
-      const emailPattern = /\S+@\S+\.\S+/;
-      if (!emailPattern.test(detail.email)) {
-     setError("Please enter a valid email address.");
+    const detail = {
+      name: name.trim(),
+      email: email.trim().toLowerCase(),
+      password: password.trim(),
+    };
+
+    if (!detail.name || !detail.email || !detail.password) {
+      setError("All fields are required.");
       return;
     }
-    
-     setLoading(true);
+
+    const emailPattern = /\S+@\S+\.\S+/;
+    if (!emailPattern.test(detail.email)) {
+      setError("Please enter a valid email address.");
+      return;
+    }
+
+    setLoading(true);
 
     try {
-      const res = await API.post("/user/register",  detail);
-
+      const res = await API.post("/user/register", detail);
       localStorage.setItem("token", res.data.token);
       router.push("/tasks");
-    } catch (err: any) {
-      setError(err?.response?.data?.msg || "Registration failed");
-    }finally{
+    } catch (error: unknown) {
+      setError(getErrorMessage(error, "Registration failed"));
+    } finally {
       setLoading(false);
     }
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-slate-50">
-      <div className="bg-white p-8 rounded-xl shadow-md w-full max-w-sm border border-slate-200">
+    <TaskflowShell mode="signup">
+      <div className="mx-auto w-full max-w-xl">
+        <p className="text-2xl font-semibold tracking-tight text-[#f5efe7] sm:text-4xl xl:text-5xl">
+          Create your account
+        </p>
+        <p className="mt-2 text-sm leading-7 text-[#d0c9c0] sm:mt-4 sm:text-lg sm:leading-8">
+          Already have an account?{" "}
+          <Link
+            href="/login"
+            className="font-medium text-[#6b5cff] transition-colors hover:text-[#8a7cff]"
+          >
+            Sign in
+          </Link>
+        </p>
 
-        <h1 className="text-2xl font-semibold text-center mb-6 text-slate-800">Register</h1>
+        <form onSubmit={handleRegister} className="mt-6 space-y-4 sm:mt-10 sm:space-y-6">
+          {error ? (
+            <div className="rounded-2xl border border-rose-400/20 bg-rose-500/10 px-4 py-3 text-sm text-rose-100">
+              {error}
+            </div>
+          ) : null}
 
-        {error && (
-          <p className="bg-red-50 text-red-700 p-2 rounded mb-4 text-sm text-center">
-            {error}
-          </p>
-        )}
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.24em] text-[#c6beb3] sm:mb-3 sm:text-sm">
+              Full name
+            </label>
+            <input
+              type="text"
+              placeholder="Your name"
+              value={name}
+              required
+              onChange={(e) => setName(e.target.value)}
+              className="w-full rounded-2xl border border-white/10 bg-[#3a3834] px-5 py-3 text-base text-[#f7f1e8] placeholder:text-[#8d857a] outline-none transition focus:border-[#7c6bff] focus:ring-2 focus:ring-[#7c6bff]/20 sm:px-6 sm:py-4 sm:text-lg"
+            />
+          </div>
 
-        <form onSubmit={handleRegister} className="space-y-4">
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.24em] text-[#c6beb3] sm:mb-3 sm:text-sm">
+              Email address
+            </label>
+            <input
+              type="email"
+              placeholder="you@example.com"
+              value={email}
+              required
+              onChange={(e) => setEmail(e.target.value)}
+              className="w-full rounded-2xl border border-white/10 bg-[#3a3834] px-5 py-3 text-base text-[#f7f1e8] placeholder:text-[#8d857a] outline-none transition focus:border-[#7c6bff] focus:ring-2 focus:ring-[#7c6bff]/20 sm:px-6 sm:py-4 sm:text-lg"
+            />
+          </div>
 
-        <input type="text" placeholder="Full Name" value={name} required
-          onChange={(e) => setName(e.target.value)}
-          className=" w-full px-4 py-2.5  bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder:text-slate-400
-            outline-none  focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500 transition-all"/>
-
-         <input type="text" placeholder="email" value={email}  required  onChange={(e) => setEmail(e.target.value)}
-          className=" w-full px-4 py-2.5  bg-slate-50 border border-slate-300 rounded-lg text-slate-800 placeholder:text-slate-400 outline-none focus:ring-2 focus:ring-indigo-300 focus:border-indigo-500 transition-all"/>
-
-          <input type="password" placeholder="Password" value={password}required onChange={(e) => setPassword(e.target.value)}
-            className=" w-full px-4 py-2.5  bg-slate-50 border border-slate-300 rounded-lg  text-slate-800 placeholder:text-slate-400 outline-none  focus:ring-2 focus:ring-indigo-300  focus:border-indigo-500 transition-all" />
-
+          <div>
+            <label className="mb-2 block text-xs font-semibold uppercase tracking-[0.24em] text-[#c6beb3] sm:mb-3 sm:text-sm">
+              Password
+            </label>
+            <input
+              type="password"
+              placeholder="••••••••"
+              value={password}
+              required
+              onChange={(e) => setPassword(e.target.value)}
+              className="w-full rounded-2xl border border-white/10 bg-[#3a3834] px-5 py-3 text-base text-[#f7f1e8] placeholder:text-[#8d857a] outline-none transition focus:border-[#7c6bff] focus:ring-2 focus:ring-[#7c6bff]/20 sm:px-6 sm:py-4 sm:text-lg"
+            />
+          </div>
 
           <button
-         type="submit"
-         disabled={loading}
-        className={`w-full text-white py-2 rounded-lg transition
-         ${loading 
-         ? "bg-indigo-400 cursor-not-allowed" 
-         : "bg-indigo-600 hover:bg-indigo-700"
-          }`}
-        >
-         {loading ? "Registering..." : "Register"}
-        </button>
+            type="submit"
+            disabled={loading}
+            className={`flex w-full items-center justify-center rounded-2xl border border-white/16 px-6 py-3 text-lg font-medium text-white transition sm:py-4 sm:text-2xl ${
+              loading
+                ? "cursor-not-allowed bg-[#484540] text-white/60"
+                : "bg-[#3d3a37] hover:-translate-y-0.5 hover:bg-[#46423e]"
+            }`}
+          >
+            {loading ? "Creating account..." : "Create account"}
+          </button>
         </form>
-
-        <p className="mt-4 text-center text-sm text-slate-600">
-          Already have an account?{" "}
-          <a href="/login" className="text-indigo-600 hover:underline">
-            Login
-          </a>
-        </p>
       </div>
-    </div>
+    </TaskflowShell>
   );
 };
 
